@@ -1,0 +1,10 @@
+name: postgressdb
+run-name: Setting up the Postgress Database
+on: [push]
+jobs:
+  test-output:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Test Output
+      run: echo "Here is a test"
+      
