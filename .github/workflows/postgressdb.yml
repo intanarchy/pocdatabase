@@ -69,6 +69,29 @@ jobs:
           conn.close()" > test_db_connection.py
           python test_db_connection.py
 
+      - name: Run script to Insert Employee Tables to PostgreSQL
+        env:
+          PGHOST: database-1.cb83vc84s1ku.us-east-1.rds.amazonaws.com
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: EdgeOne!
+          PGDATABASE: postgres
+        run: |
+          echo "import psycopg2
+          conn = psycopg2.connect(
+              host='$PGHOST',
+              port='$PGPORT',
+              user='$PGUSER',
+              password='$PGPASSWORD',
+              dbname='$PGDATABASE'
+          )
+          cur = conn.cursor()
+          cur.execute(\"INSERT INTO pocaws.employeetable (empname, empid) VALUES ('Alice_10', 10)\")          
+          conn.commit()
+          cur.close()
+          conn.close()" > insert_data.py
+          python insert_data.py
+
       - name: Run script to Select Employee Tables to PostgreSQL
         env:
           PGHOST: database-1.cb83vc84s1ku.us-east-1.rds.amazonaws.com
@@ -92,4 +115,5 @@ jobs:
               print(row)
           cur.close()
           conn.close()" > select_data.py
-          python select_data.py        
+          python select_data.py          
+          
