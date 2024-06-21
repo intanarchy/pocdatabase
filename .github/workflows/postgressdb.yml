@@ -1,26 +1,112 @@
-name: Insert Data into PostgreSQL
-
+name: postgressdb
+ 
 on:
   push:
     branches:
-      - main  # adjust based on your branch
-
+      - main
+  pull_request:
+    branches:
+      - main
+ 
 jobs:
-  insert-data:
+  HealthCheck:
     runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Set up PostgreSQL
-        uses: docker://postgres:14
+ 
+    services:
+      postgres:
+        image: postgres:14
+        ports:
+          - 5432:5432
         env:
+          POSTGRES_DB: postgres
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: EdgeOne!
-          POSTGRES_DB: postgres
-
-      - name: Run SQL script
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+ 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+ 
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+ 
+      - name: Install dependencies
         run: |
-          psql -h database-1.cb83vc84s1ku.us-east-1.rds.amazonaws.com -U postgres -d postgres -f insertQueries.sql
-
+          python -m pip install --upgrade pip
+          pip install psycopg2-binary
+ 
+      - name: Run script to connect to PostgreSQL
+        env:
+          PGHOST: database-1.cb83vc84s1ku.us-east-1.rds.amazonaws.com
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: EdgeOne!
+          PGDATABASE: postgres
+        run: |
+          echo "import psycopg2
+          conn = psycopg2.connect(
+              host='$PGHOST',
+              port='$PGPORT',
+              user='$PGUSER',
+              password='$PGPASSWORD',
+              dbname='$PGDATABASE'
+          )
+          print('Connected to the database')
+          conn.close()" > test_db_connection.py
+          python test_db_connection.py
+ 
+      - name: Run SQL script
+        env:
+          PGHOST: database-1.cb83vc84s1ku.us-east-1.rds.amazonaws.com
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: EdgeOne!
+          PGDATABASE: postgres
+        run: |
+          echo "import psycopg2
+          conn = psycopg2.connect(
+              host='$PGHOST',
+              port='$PGPORT',
+              user='$PGUSER',
+              password='$PGPASSWORD',
+              dbname='$PGDATABASE'
+          )
+          cur = conn.cursor()
+          with open('path/to/your/script.sql', 'r') as file:
+              sql = file.read()
+              cur.execute(sql)
+          conn.commit()
+          cur.close()
+          conn.close()" > run_sql_script.py
+          python run_sql_script.py
+ 
+      - name: Run script to Select Employee Tables to PostgreSQL
+        env:
+          PGHOST: database-1.cb83vc84s1ku.us-east-1.rds.amazonaws.com
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: EdgeOne!
+          PGDATABASE: postgres
+        run: |
+          echo "import psycopg2
+          conn = psycopg2.connect(
+              host='$PGHOST',
+              port='$PGPORT',
+              user='$PGUSER',
+              password='$PGPASSWORD',
+              dbname='$PGDATABASE'
+          )
+          cur = conn.cursor()
+          cur.execute('select * from pocaws.employeetable')
+          rows = cur.fetchall()
+          for row in rows:
+              print(row)
+          cur.close()
+          conn.close()" > select_data.py
+          python select_data.py
