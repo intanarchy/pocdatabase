@@ -1,3 +1,2 @@
-INSERT INTO pocaws.employeetable (empname , empid)
-VALUES ('Alice_4', 104),
-VALUES ('Alice_5', 105);
+INSERT INTO pocaws.employeetable (empname , empid) VALUES ('Alice-111', 111);
+INSERT INTO pocaws.employeetable (empname , empid) VALUES ('Alice-112', 112);
