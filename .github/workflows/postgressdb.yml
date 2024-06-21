@@ -78,7 +78,7 @@ jobs:
               dbname='$PGDATABASE'
           )
           cur = conn.cursor()
-          with open('path/to/your/script.sql', 'r') as file:
+          with open('insertQueries.sql', 'r') as file:
               sql = file.read()
               cur.execute(sql)
           conn.commit()
