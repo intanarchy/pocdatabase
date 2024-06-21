@@ -68,3 +68,28 @@ jobs:
           print('Connected to the database')
           conn.close()" > test_db_connection.py
           python test_db_connection.py
+
+      - name: Run script to Select Employee Tables to PostgreSQL
+        env:
+          PGHOST: database-1.cb83vc84s1ku.us-east-1.rds.amazonaws.com
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: EdgeOne!
+          PGDATABASE: postgres
+        run: |
+          echo "import psycopg2
+          conn = psycopg2.connect(
+              host='$PGHOST',
+              port='$PGPORT',
+              user='$PGUSER',
+              password='$PGPASSWORD',
+              dbname='$PGDATABASE'
+          )
+          cur = conn.cursor()
+          cur.execute('select * from pocaws.employeetable')
+          rows = cur.fetchall()
+          for row in rows:
+              print(row)
+          cur.close()
+          conn.close()" > select_data.py
+          python select_data.py        
