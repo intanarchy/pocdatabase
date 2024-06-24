@@ -10,12 +10,14 @@ on:
     
 jobs:
   HealthCheck:
-    runs-on: ubuntu-latest    
+    runs-on: ubuntu-latest
+    env:
+      PGPORT: ${{ secrets.DB_PORT }}
     services:
       postgres:        
         image: postgres:14
         ports:
-          - ${{ secrets.DB_PORT }}:5432
+          - ${{ env.PGPORT }}:5432
         env:
           POSTGRES_DB: ${{ secrets.DB_DATABASE }}
           POSTGRES_USER: ${{ secrets.DB_USER }}
