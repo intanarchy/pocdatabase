@@ -11,21 +11,7 @@ on:
 jobs:
   HealthCheck:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:14
-        ports:
-          - ${{ secrets.DB_PORT }}:5432
-        env:
-          POSTGRES_DB: ${{ secrets.DB_DATABASE }}
-          POSTGRES_USER: ${{ secrets.DB_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -40,9 +26,29 @@ jobs:
           python -m pip install --upgrade pip
           pip install psycopg2-binary
 
+      - name: Start PostgreSQL service
+        env:
+          POSTGRES_DB: ${{ secrets.DB_DATABASE }}
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          PGPORT: ${{ secrets.DB_PORT }}
+        run: |
+          docker run -d \
+            -e POSTGRES_DB=$POSTGRES_DB \
+            -e POSTGRES_USER=$POSTGRES_USER \
+            -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
+            -p $PGPORT:5432 \
+            --name postgres-container \
+            postgres:14
+          # Wait for PostgreSQL to be ready
+          until docker exec postgres-container pg_isready; do
+            echo "Waiting for PostgreSQL to be ready..."
+            sleep 1
+          done
+
       - name: Run script to connect to PostgreSQL
         env:
-          PGHOST: localhost
+          PGHOST: ${{ secrets.DB_HOST }}
           PGPORT: ${{ secrets.DB_PORT }}
           PGUSER: ${{ secrets.DB_USER }}
           PGPASSWORD: ${{ secrets.DB_PASSWORD }}
