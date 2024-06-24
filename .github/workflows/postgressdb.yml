@@ -4,18 +4,18 @@ on:
   push:
     branches:
       - main
-  pull_request:
+  pull_request:    
     branches:
       - main
     
 jobs:
   HealthCheck:
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest    
     services:
-      postgres:
+      postgres:        
         image: postgres:14
         ports:
-          - 5432:${{ secrets.DB_PORT }}
+          - "${{ secrets.DB_PORT }}:5432"
         env:
           POSTGRES_DB: ${{ secrets.DB_DATABASE }}
           POSTGRES_USER: ${{ secrets.DB_USER }}
