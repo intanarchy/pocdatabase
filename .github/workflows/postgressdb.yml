@@ -37,7 +37,7 @@ jobs:
             -e POSTGRES_DB=$POSTGRES_DB \
             -e POSTGRES_USER=$POSTGRES_USER \
             -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
-            -p $PGPORT:5432 \
+            -p $PGPORT:${{ secrets.DB_PORT }} \
             --name postgres-container \
             postgres:14
           # Wait for PostgreSQL to be ready
