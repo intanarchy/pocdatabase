@@ -26,18 +26,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install psycopg2-binary
 
-      - name: Set Environment Details
+      - name: Start PostgreSQL service
         env: &db-env
           PGHOST: ${{ secrets.DB_HOSTNAME }}
           PGPORT: ${{ secrets.DB_PORT }}
           PGUSER: ${{ secrets.DB_USER }}
           PGPASSWORD: ${{ secrets.DB_PASSWORD }}
           PGDATABASE: ${{ secrets.DB_DATABASE }}
-          run: |
-              echo "Setting Up Environment Variables..."
-            
-      - name: Start PostgreSQL service
-        env: *db-env
         run: |
           docker run -d \
             -e POSTGRES_DB=$POSTGRES_DB \
@@ -53,7 +48,7 @@ jobs:
           done
 
       - name: Connect To Database
-        env: *db-env
+        env: *db-env          
         run: |
           echo "import psycopg2
           conn = psycopg2.connect(
