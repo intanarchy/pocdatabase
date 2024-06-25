@@ -32,8 +32,10 @@ jobs:
           PGPORT: ${{ secrets.DB_PORT }}
           PGUSER: ${{ secrets.DB_USER }}
           PGPASSWORD: ${{ secrets.DB_PASSWORD }}
-          PGDATABASE: ${{ secrets.DB_DATABASE }}		  
-
+          PGDATABASE: ${{ secrets.DB_DATABASE }}
+          run: |
+              echo "Setting Up Environment Variables..."
+            
       - name: Start PostgreSQL service
         env: *db-env
         run: |
