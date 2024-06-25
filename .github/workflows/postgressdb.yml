@@ -11,7 +11,14 @@ on:
 jobs:
   HealthCheck:
     runs-on: ubuntu-latest
-    
+
+    env:
+      PGHOST: ${{ secrets.DB_HOSTNAME }}
+      PGPORT: ${{ secrets.DB_PORT }}
+      PGUSER: ${{ secrets.DB_USER }}
+      PGPASSWORD: ${{ secrets.DB_PASSWORD }}
+      PGDATABASE: ${{ secrets.DB_DATABASE }}
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -27,17 +34,12 @@ jobs:
           pip install psycopg2-binary
 
       - name: Start PostgreSQL service
-        env:
-          POSTGRES_DB: ${{ secrets.DB_DATABASE }}
-          POSTGRES_USER: ${{ secrets.DB_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          PGPORT: ${{ secrets.DB_PORT }}
         run: |
           docker run -d \
-            -e POSTGRES_DB=$POSTGRES_DB \
-            -e POSTGRES_USER=$POSTGRES_USER \
-            -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
-            -p $PGPORT:5432 \
+            -e POSTGRES_DB=$PGDATABASE \
+            -e POSTGRES_USER=$PGUSER \
+            -e POSTGRES_PASSWORD=$PGPASSWORD \
+            -p $PGPORT:$PGPORT \
             --name postgres-container \
             postgres:14
           # Wait for PostgreSQL to be ready
@@ -46,13 +48,7 @@ jobs:
             sleep 1
           done
 
-      - name: Connect to PostgreSQL
-        env:
-          PGHOST: ${{ secrets.DB_HOSTNAME }}
-          PGPORT: ${{ secrets.DB_PORT }}
-          PGUSER: ${{ secrets.DB_USER }}
-          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
-          PGDATABASE: ${{ secrets.DB_DATABASE }}
+      - name: Run script to connect to PostgreSQL
         run: |
           echo "import psycopg2
           conn = psycopg2.connect(
@@ -66,13 +62,7 @@ jobs:
           conn.close()" > test_db_connection.py
           python test_db_connection.py
 
-      - name: Insert Tables To edgeConnect-Config
-        env:
-          PGHOST: ${{ secrets.DB_HOSTNAME }}
-          PGPORT: ${{ secrets.DB_PORT }}
-          PGUSER: ${{ secrets.DB_USER }}
-          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
-          PGDATABASE: ${{ secrets.DB_DATABASE }}
+      - name: Run script to Insert Tables To edgeConnect-Config
         run: |
           echo "import psycopg2
           conn = psycopg2.connect(
@@ -91,13 +81,7 @@ jobs:
           conn.close()" > run_sql_script.py
           python run_sql_script.py
 
-      - name: Select Employee Tables from PostgreSQL
-        env:
-          PGHOST: ${{ secrets.DB_HOSTNAME }}
-          PGPORT: ${{ secrets.DB_PORT }}
-          PGUSER: ${{ secrets.DB_USER }}
-          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
-          PGDATABASE: ${{ secrets.DB_DATABASE }}
+      - name: Run script to Select Employee Tables from PostgreSQL
         run: |
           echo "import psycopg2
           conn = psycopg2.connect(
