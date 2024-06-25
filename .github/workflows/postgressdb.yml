@@ -1,12 +1,16 @@
 name: postgressdb
 
 on:
-  push:
-    branches:
-      - develop
-  pull_request:    
-    branches:
-      - develop
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'insert'
+        type: choice
+        options:
+          - insert
+          - select
 
 jobs:
   HealthCheck:
@@ -63,6 +67,7 @@ jobs:
           python test_db_connection.py
 
       - name: Insert Tables To edgeConnect-Config
+        if: ${{ github.event.inputs.action == 'insert' }}
         run: |
           echo "import psycopg2
           conn = psycopg2.connect(
@@ -82,6 +87,7 @@ jobs:
           python run_sql_script.py
 
       - name: Select Employee Tables from PostgreSQL
+        if: ${{ github.event.inputs.action == 'select' }}
         run: |
           echo "import psycopg2
           conn = psycopg2.connect(
