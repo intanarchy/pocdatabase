@@ -3,10 +3,10 @@ name: postgressdb
 on:
   push:
     branches:
-      - main
+      - develop
   pull_request:    
     branches:
-      - main
+      - develop
 
 jobs:
   HealthCheck:
@@ -48,7 +48,7 @@ jobs:
             sleep 1
           done
 
-      - name: Run script to connect to PostgreSQL
+      - name: Connect to PostgreSQL
         run: |
           echo "import psycopg2
           conn = psycopg2.connect(
@@ -62,7 +62,7 @@ jobs:
           conn.close()" > test_db_connection.py
           python test_db_connection.py
 
-      - name: Run script to Insert Tables To edgeConnect-Config
+      - name: Insert Tables To edgeConnect-Config
         run: |
           echo "import psycopg2
           conn = psycopg2.connect(
@@ -81,7 +81,7 @@ jobs:
           conn.close()" > run_sql_script.py
           python run_sql_script.py
 
-      - name: Run script to Select Employee Tables from PostgreSQL
+      - name: Select Employee Tables from PostgreSQL
         run: |
           echo "import psycopg2
           conn = psycopg2.connect(
