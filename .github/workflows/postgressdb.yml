@@ -58,6 +58,11 @@ jobs:
               with open(sql_file, 'r') as file:
                   sql = file.read()
                   cur.execute(sql)
+                  if cur.description:
+                      rows = cur.fetchall()
+                      print(f'Results from {sql_file}:')
+                      for row in rows:
+                          print(row)
                   conn.commit()
 
           cur.close()
