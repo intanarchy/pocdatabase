@@ -7,7 +7,7 @@ on:
         description: 'Path to the directory containing SQL files'
         required: true
         default: 'database'
-
+        
 jobs:
   HealthCheck:
     runs-on: ubuntu-latest
