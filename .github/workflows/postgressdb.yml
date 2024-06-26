@@ -3,11 +3,11 @@ name: postgressdb
 on:
   workflow_dispatch:
     inputs:
-      sql_file_path:
-        description: 'Path to the SQL file'
+      sql_directory:
+        description: 'Path to the directory containing SQL files'
         required: true
-        default: 'database/databaseSelectQueries.sql'
-        
+        default: 'database'
+
 jobs:
   HealthCheck:
     runs-on: ubuntu-latest
@@ -32,10 +32,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install psycopg2-binary
 
+      - name: Set SQL directory
+        run: echo "SQL_DIRECTORY=${{ github.event.inputs.sql_directory }}" >> $GITHUB_ENV
+
       - name: CRUD Operation On edgeConnect-Config
         run: |
           echo "import os
           import psycopg2
+          import glob
+
           conn = psycopg2.connect(
               host=os.getenv('PGHOST'),
               port=os.getenv('PGPORT'),
@@ -44,32 +49,17 @@ jobs:
               dbname=os.getenv('PGDATABASE')
           )
           cur = conn.cursor()
-          sql_file_path = '${{ github.event.inputs.sql_file_path }}'
-          with open(sql_file_path, 'r') as file:
-              sql = file.read()
-              cur.execute(sql)
-          conn.commit()
+          sql_directory = os.getenv('SQL_DIRECTORY')
+          print(f'Reading SQL files from directory: {sql_directory}')
+
+          sql_files = glob.glob(os.path.join(sql_directory, '**', '*.sql'), recursive=True)
+          for sql_file in sql_files:
+              print(f'Executing SQL file: {sql_file}')
+              with open(sql_file, 'r') as file:
+                  sql = file.read()
+                  cur.execute(sql)
+                  conn.commit()
+
           cur.close()
           conn.close()" > run_sql_script.py
           python run_sql_script.py
-
-      - name: Results from Employee Tables
-        run: |
-          echo "import psycopg2
-          conn = psycopg2.connect(
-              host='$PGHOST',
-              port='$PGPORT',
-              user='$PGUSER',
-              password='$PGPASSWORD',
-              dbname='$PGDATABASE'
-          )
-          cur = conn.cursor()
-          with open('database/databaseSelectQueries.sql', 'r') as file:
-            sql = file.read()
-            cur.execute(sql)
-            rows = cur.fetchall()
-            for row in rows:
-              print(row)
-            cur.close()
-          conn.close()" > select_data.py
-          python select_data.py
