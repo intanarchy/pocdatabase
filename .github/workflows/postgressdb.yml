@@ -7,14 +7,7 @@ on:
         description: 'Path to the SQL file'
         required: true
         default: 'database/databaseSelectQueries.sql'
-
-  push:
-    branches:
-      - main
-  pull_request:    
-    branches:
-      - main
-
+        
 jobs:
   HealthCheck:
     runs-on: ubuntu-latest
