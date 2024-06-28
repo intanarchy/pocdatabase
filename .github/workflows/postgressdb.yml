@@ -3,14 +3,19 @@ name: postgressdb
 on:
   workflow_dispatch:
     inputs:
-      sql_directory:
-        description: 'Path to the directory containing SQL files'
+      action:
+        description: 'Action to perform'
         required: true
-        default: 'database'
-        
+        default: 'insert'
+        type: choice
+        options:
+          - insert
+          - select
+
 jobs:
   HealthCheck:
     runs-on: ubuntu-latest
+
     env:
       PGHOST: ${{ secrets.DB_HOSTNAME }}
       PGPORT: ${{ secrets.DB_PORT }}
@@ -32,39 +37,71 @@ jobs:
           python -m pip install --upgrade pip
           pip install psycopg2-binary
 
-      - name: Set SQL directory
-        run: echo "SQL_DIRECTORY=${{ github.event.inputs.sql_directory }}" >> $GITHUB_ENV
-
-      - name: CRUD Operation On edgeConnect-Config
+      - name: Start PostgreSQL service
         run: |
-          echo "import os
-          import psycopg2
-          import glob
+          docker run -d \
+            -e POSTGRES_DB=$PGDATABASE \
+            -e POSTGRES_USER=$PGUSER \
+            -e POSTGRES_PASSWORD=$PGPASSWORD \
+            -p $PGPORT:$PGPORT \
+            --name postgres-container \
+            postgres:14
+          # Wait for PostgreSQL to be ready
+          until docker exec postgres-container pg_isready; do
+            echo "Waiting for PostgreSQL to be ready..."
+            sleep 1
+          done
 
+      - name: Connect to PostgreSQL
+        run: |
+          echo "import psycopg2
           conn = psycopg2.connect(
-              host=os.getenv('PGHOST'),
-              port=os.getenv('PGPORT'),
-              user=os.getenv('PGUSER'),
-              password=os.getenv('PGPASSWORD'),
-              dbname=os.getenv('PGDATABASE')
+              host='$PGHOST',
+              port='$PGPORT',
+              user='$PGUSER',
+              password='$PGPASSWORD',
+              dbname='$PGDATABASE'
+          )
+          print('Connected to the database')
+          conn.close()" > test_db_connection.py
+          python test_db_connection.py
+
+      - name: Insert Tables To edgeConnect-Config
+        if: ${{ github.event.inputs.action == 'insert' }}
+        run: |
+          echo "import psycopg2
+          conn = psycopg2.connect(
+              host='$PGHOST',
+              port='$PGPORT',
+              user='$PGUSER',
+              password='$PGPASSWORD',
+              dbname='$PGDATABASE'
           )
           cur = conn.cursor()
-          sql_directory = os.getenv('SQL_DIRECTORY')
-          print(f'Reading SQL files from directory: {sql_directory}')
-
-          sql_files = glob.glob(os.path.join(sql_directory, '**', '*.sql'), recursive=True)
-          for sql_file in sql_files:
-              print(f'Executing SQL file: {sql_file}')
-              with open(sql_file, 'r') as file:
-                  sql = file.read()
-                  cur.execute(sql)
-                  if cur.description:
-                      rows = cur.fetchall()
-                      print(f'Results from {sql_file}:')
-                      for row in rows:
-                          print(row)
-                  conn.commit()
-
+          with open('database/insert/insertQueries.sql', 'r') as file:
+              sql = file.read()
+              cur.execute(sql)
+          conn.commit()
           cur.close()
           conn.close()" > run_sql_script.py
           python run_sql_script.py
+
+      - name: Select Employee Tables from PostgreSQL
+        if: ${{ github.event.inputs.action == 'select' }}
+        run: |
+          echo "import psycopg2
+          conn = psycopg2.connect(
+              host='$PGHOST',
+              port='$PGPORT',
+              user='$PGUSER',
+              password='$PGPASSWORD',
+              dbname='$PGDATABASE'
+          )
+          cur = conn.cursor()
+          cur.execute('select * from pocaws.employeetable')
+          rows = cur.fetchall()
+          for row in rows:
+              print(row)
+          cur.close()
+          conn.close()" > select_data.py
+          python select_data.py
